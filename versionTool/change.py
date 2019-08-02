@@ -4,6 +4,7 @@ import os
 import re
 import logging
 import sys
+import operator as op
 
 
 # logging.basicConfig(level=logging.DEBUG,
@@ -49,8 +50,13 @@ if os.path.isfile(currpathFile):
     desVerEnd = desVer + '_'
     tihuan = regex.sub(desVerEnd, content)
     logging.debug(tihuan)
-    file.write(tihuan)
-    file.close()
+    isConfirm = input('please input y to confirm modify, n to cancell modify: ')
+    if op.eq(isConfirm.lower(), 'y'):
+        file.write(tihuan)
+        logging.debug('Modify OK')
+    else:
+        logging.debug('Cancell!!')
+        file.close()
 else:
     logging.error('OnlyBIN.txt is not exist')
 
