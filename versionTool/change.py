@@ -22,6 +22,7 @@ fileName = os.listdir(currpath)
 
 currpathFile = currpath + '\\' + 'OnlyBin.txt'
 logging.debug('filename:%s', currpathFile)
+
 # logging.debug('path exis :%d',os.path.exists(currpath),'file
 # exits:%d',os.path.isfile(currpath))
 logging.debug('path exis :%s, file exists:%s',
