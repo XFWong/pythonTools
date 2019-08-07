@@ -19,8 +19,11 @@ logging.basicConfig(level=logging.DEBUG,
                     format='%(asctime)s-%(filename)s[line:%(lineno)d]-%(levelname)s:%(message)s')
 currpath = os.getcwd()
 fileName = os.listdir(currpath)
-
-currpathFile = currpath + '\\' + 'OnlyBin.txt'
+if not len(sys.argv) > 1:
+    logging.debug('Please input filename!')
+    sys.exit(-1)
+logging.debug('filename:%s' % sys.argv[1])
+currpathFile = currpath + '\\' + sys.argv[1]
 logging.debug('filename:%s', currpathFile)
 
 # logging.debug('path exis :%d',os.path.exists(currpath),'file
@@ -51,7 +54,8 @@ if os.path.isfile(currpathFile):
     desVerEnd = desVer + '_'
     tihuan = regex.sub(desVerEnd, content)
     logging.debug(tihuan)
-    isConfirm = input('please input y to confirm modify, n to cancell modify: ')
+    isConfirm = input(
+        'please input y to confirm modify, n to cancell modify: ')
     if op.eq(isConfirm.lower(), 'y'):
         file.write(tihuan)
         logging.debug('Modify OK')
