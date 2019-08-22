@@ -45,7 +45,67 @@ def login_douban(accout, password):
     return 1
 
 
-def spider_comment(page=0):
+def spider_comment():
+    headers = {
+        'user-agent': 'Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36'}
+    urls = []
+    with open(URL_PATH, 'r') as file:
+        for line in file:
+            urls.append(line)
+    try:
+        i = 0
+
+        for element in urls:
+            i += 1
+            print('提取第%d个评论' % i)
+            url = element.strip('\n')
+            print(url)
+            r = s.get(url, headers=headers)
+            if r.raise_for_status() != None:
+                print(r.raise_for_status())
+            with open(COMMENTS_FILE_PATH, 'a+', encoding=r.encoding) as file:
+                soup = BeautifulSoup(r.content, features='lxml')
+                for comment in soup.find_all('div', class_='review-content clearfix'):
+                    # 提取100字以上的评论
+                    # print(comment.p.string)
+                    if comment.get_text() != None and len(comment.get_text()) > 100:
+                        title = '\n\n\t\t\t\t############第%d个评论####作者： %s#######\n\n' % (
+                            i, comment.attrs['data-author'])
+                        file.write(title)
+                        file.write(comment.get_text())
+                        file.write('\n')
+                # break
+    except Exception as e:
+        print(e.message)
+        print('The %d  happens error! ' % i)
+    else:
+        print('提取评论成功！共%d条' % i)
+
+
+# 测试使用哦
+def extract_content():
+    soup = BeautifulSoup(open(COMMENTS_FILE_PATH), features='lxml')
+    # print(soup.prettify)
+    i = 0
+    for comment in soup.find_all('div', class_='review-content clearfix'):
+        i += 1
+        # print(comment)
+        print(comment.get_text())
+        # print(comment.attrs)
+        # print(comment.attrs['data-author'])
+        # for child in comment:
+        #     author = child.get('data-author')
+        #     print(author)
+    print(i)
+    # if comment.string != None:
+    #     print(comment.string)
+    # for comment in soup.find_all('p') or comment in soup.find_all('div'):
+    #     if comment.string != None and len(comment.string) > 100:
+    #         i += 1
+    #         print(i)
+
+
+def spider_url():
     """
     爬取某页影评
     :param page: 分页参数
@@ -98,37 +158,20 @@ def spider_comment(page=0):
                     file.write(link.get('href'))
                     file.write('\n')
     print('URL提取完成！！')
-    # print('开始爬取第%d页' % int(page))
-    # start = int(page * 20)
-    # comment_url = 'https://movie.douban.com/subject/1905462/comments?start=%d&limit=20&sort=new_score&status=P' % start
-    # # 请求头
-
-    # try:
-    #     r = s.get(comment_url, headers=headers)
-    #     r.raise_for_status()
-    # except:
-    #     print('第%d页爬取请求失败' % page)
-    #     return 0
-    # # 使用正则提取影评内容
-    # comments = re.findall('<span class="short">(.*)</span>', r.text)
-    # if not comments:
-    #     return 0
-    # # 写入文件
-    # with open(COMMENTS_FILE_PATH, 'a+', encoding=r.encoding) as file:
-    #     file.writelines('\n'.join(comments))
     return 1
 
 
 def main():
-    if not os.path.isfile(URL_PATH):
-        with open(URL_PATH, 'r') as file:
-            content = file.read()
-            print(content)
+    # extract_content()
+    accout = input('Please input your accout:\n')
+    password = getpass.getpass('your password:\n')
+    login_douban(accout, password)
+    if os.path.isfile(COMMENTS_FILE_PATH):
+
+    if os.path.isfile(URL_PATH):
+        spider_comment()
     else:
-        accout = input('Please input your accout:\n')
-        password = getpass.getpass('your password:\n')
-        if login_douban(accout, password):
-            spider_comment(1)
+        spider_url()
 
 
 if __name__ == '__main__':
