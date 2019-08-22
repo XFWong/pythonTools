@@ -8,7 +8,7 @@ s = requests.Session()
 headers = {
     'user-agent': 'Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36'}
 mainUrl = 'https://www.chinaetfs.net'
-urlAll = []
+
 ARTILE = 'ChinaEtfs.txt'
 
 
@@ -53,13 +53,16 @@ def spilder_url():
                 for urls in soup.find_all('a'):
                     if re.match(r'https://www.chinaetfs.net/\?p=\d+', urls['href']):
                         urlContent.add(urls['href'])
-        print(urlContent)
-        print(urlPage)
+        # print(urlContent)
+        # print(urlPage)
         urlAll = list(urlContent)
+        return urlAll
+        # print(urlAll)
 
 
-def spilder_content():
+def spilder_content(urlAll):
     # urlAll = ['https://www.chinaetfs.net/?p=1260']
+    print('共%d篇' % len(urlAll))
     title, time, artile = '', '', ''
     if urlAll != None:
         i = 0
@@ -67,6 +70,7 @@ def spilder_content():
             try:
                 i += 1
                 print('拉取第%d篇文章' % i)
+                print(url)
                 r = s.get(url, headers=headers)
             except Exception as e:
                 print('%s 失败!' % url)
@@ -89,8 +93,7 @@ def spilder_content():
 
 
 def main():
-    spilder_url()
-    spilder_content()
+    spilder_content(spilder_url())
 
 
 if __name__ == '__main__':
