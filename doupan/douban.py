@@ -14,12 +14,13 @@ import getpass
 from bs4 import BeautifulSoup
 
 # 词云形状图片
-WC_MASK_IMG = 'Emile.jpg'
+WC_MASK_IMG = 'shade.jpg'
+# WC_MASK_IMG = 'alice_color.png'
 # 影评数据保存文件
 COMMENTS_FILE_PATH = 'douban_comments.txt'
 URL_PATH = 'url.txt'
 # 词云字体
-WC_FONT_PATH = '/Library/Fonts/Songti.ttc'
+WC_FONT_PATH = '叶立群几何体.ttf'
 
 s = requests.Session()
 
@@ -161,17 +162,43 @@ def spider_url():
     return 1
 
 
+def cut_word():
+    with open(COMMENTS_FILE_PATH, encoding='utf-8') as file:
+        comment_text = file.read()
+        wordlist = jieba.cut(comment_text, cut_all=True)
+        wl = ' '.join(wordlist)
+        # print(wl)
+        return wl
+
+
+def create_word_cloud():
+    wc_mask = np.array(Image.open(WC_MASK_IMG))
+    stop_words = ['是','可以','自己','没有','就是','作者','of','and','一些','一个','一只','一样','一种','一点',
+    'the']
+    wc = WordCloud(background_color='white', max_words=200, mask=wc_mask, scale=4,
+                   max_font_size=50, random_state=42, stopwords=stop_words, font_path=WC_FONT_PATH)
+    wc.generate(cut_word())
+
+    plt.imshow(wc, interpolation='bilinear')
+    plt.axis('off')
+    # plt.figure()
+    # plt.show()
+    wc.to_file('douban.png')
+
+
 def main():
     # extract_content()
-    accout = input('Please input your accout:\n')
-    password = getpass.getpass('your password:\n')
-    login_douban(accout, password)
-    if os.path.isfile(COMMENTS_FILE_PATH):
 
-    if os.path.isfile(URL_PATH):
-        spider_comment()
+    if os.path.exists(COMMENTS_FILE_PATH):
+        create_word_cloud()
     else:
-        spider_url()
+        accout = input('Please input your accout:\n')
+        password = getpass.getpass('your password:\n')
+        login_douban(accout, password)
+        if os.path.exists(URL_PATH):
+            spider_comment()
+        else:
+            spider_url()
 
 
 if __name__ == '__main__':
