@@ -3,6 +3,13 @@
 import requests
 from bs4 import BeautifulSoup
 import re
+import os
+import jieba
+import numpy as np
+import matplotlib.pyplot as plt
+from wordcloud import WordCloud
+from PIL import Image
+
 
 s = requests.Session()
 headers = {
@@ -10,6 +17,11 @@ headers = {
 mainUrl = 'https://www.chinaetfs.net'
 
 ARTILE = 'ChinaEtfs.txt'
+# 词云形状图片
+WC_MASK_IMG = 'shade.jpg'
+# WC_MASK_IMG = 'etfs.jpg'
+# 词云字体
+WC_FONT_PATH = '叶立群几何体.ttf'
 
 
 def spilder_url():
@@ -60,9 +72,10 @@ def spilder_url():
         # print(urlAll)
 
 
+# 提取数字
 def embeded_number(s):
     result = int(re.search(r'\d+', s).group())
-    print(result)
+    # print(result)
     return result
 
 
@@ -108,10 +121,39 @@ def spilder_content(urlAll):
         print('拉取所有文章成功！共%d篇' % i)
 
 
+def cut_word():
+    with open(ARTILE, encoding='utf-8') as file:
+        artile = file.read()
+        wordlist = jieba.cut(artile, cut_all=True)
+        wl = ' '.join(wordlist)
+        return wl
+
+
+def create_wordcloud():
+    wc_mask = np.array(Image.open(WC_MASK_IMG))
+    stop_words = ['URL', 'https', 'www', 'net', 'com', 'xueqiu'
+                  'chinaetfs', '什么', '为什么', '这样', '可以', '他们', '那么', '没有', '如果',
+                  '只有', '不是', '没有', '或者', '已经', '自己', '我们', '这个', '还是', '真的', '只是',
+                  '就是']
+    wc = WordCloud(background_color='black', max_words=500, mask=wc_mask, scale=4,
+                   max_font_size=70, random_state=42, stopwords=stop_words, font_path=WC_FONT_PATH)
+    wc.generate(cut_word())
+    plt.imshow(wc, interpolation='bilinear')
+    plt.axis('off')
+    plt.show()
+    # wc.to_file('chinaetfs.png')
+
+
 def main():
     # s = 'https://www.chinaetfs.net/?p=969'
     # embeded_number(s)
-    spilder_content(spilder_url())
+    # 文章存在则提取分词并生成词云
+    if os.path.exists(ARTILE):
+        # print(cut_word())
+        create_wordcloud()
+
+    else:
+        spilder_content(spilder_url())
 
 
 if __name__ == '__main__':
