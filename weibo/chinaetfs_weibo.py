@@ -42,28 +42,34 @@ def writ_to_file(content):
 
 
 def spilder_url():
-    page_total = 1
+    page_total = 100000
     page = 1
-    for i in range(page_total):
-        try:
-            print('拉取第%d页url' % page)
-            print(mainUrl)
-
-            params['page'] = str(page)
-        # r = s.get(login_url, headers=headers)
-            r = s.get(mainUrl, headers=headers, params=params)
-            cards = r.json().get('data').get('cards')
-        except Exception as e:
-            print(r.raise_for_status())
-        else:
-            page += 1
-            for card in cards:
-                # print(card)
-                with open(ARTILE, 'a+', encoding='utf-8') as file:
+    last_length = 0
+    with open(ARTILE, 'a+', encoding='utf-8') as file:
+        for i in range(page_total):
+            content_length = 0
+            artile = ''
+            try:
+                print('拉取第%d页url' % page)
+                print(mainUrl)
+                # params['page'] = str(page)
+                params['page'] = page
+            # r = s.get(login_url, headers=headers)
+                r = s.get(mainUrl, headers=headers, params=params)
+                cards = r.json().get('data').get('cards')
+            except Exception as e:
+                print(r.raise_for_status())
+            else:
+                page += 1
+                for card in cards:
                     if card.get('card_type') == 9:
                         text = card.get('mblog').get('text')
-                        print(text)
-                        urlPart = re.search(r'(?<=\.\.\.<a href=").+(?=">)', text)
+                        time = card.get('mblog').get('created_at')
+                        # print(time)
+                        artile += time + '\n'
+                        # print(artile)
+                        urlPart = re.search(
+                            r'(?<=\.\.\.<a href=").+(?=">)', text)
                         if urlPart != None:
                             ulr = 'https://m.weibo.cn' + urlPart.group()
                             print(ulr)
@@ -75,16 +81,30 @@ def spilder_url():
                                 content = re.search(
                                     r'(?<="text": ").+(?=")', child.get_text())
                                 if content != None:
-                                    artile = (re.sub(r'[<br/> ]', '', content.group()))
+                                    artile += (
+                                        re.sub(r'[<br/> ]', '', content.group()))
                                     # print(text)
-                                    file.write(artile)
-                                    file.write('\n\n')
+                                    # content.append(artile)
+                                    artile += '\n\n'
+                                    # print(artile)
                         else:
                             pattern = re.compile(r'<.*?>|转发微博|查看图片')
-                            artile = re.sub(pattern, '', text)
-                            print(artile)
-                            file.write(artile)
-                            file.write('\n\n')
+                            artile += re.sub(pattern, '', text)
+                            artile += '\n\n'
+                            # print(artile)
+                            # content.append(artile)
+            content_length = len(artile)
+            print('content_length %d' % content_length)
+            if content_length == last_length:
+                print('没有更多的微博了')
+                return
+            else:
+                print(artile)
+                file.write(artile)
+                last_length = content_length
+                content_length = 0
+                print('last_length:%d' % last_length)
+
     # print(soup.prettify())
     # 提取本页的所有URL及其他页面的url
     # urlPage = set()
