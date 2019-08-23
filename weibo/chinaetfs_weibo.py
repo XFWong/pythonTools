@@ -12,11 +12,20 @@ from PIL import Image
 
 
 s = requests.Session()
+# mainUrl = 'https://m.weibo.cn/u/5687069307'
+mainUrl = 'https://m.weibo.cn/api/container/getIndex'
 headers = {
-    'user-agent': 'Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36'}
-# headers = {
-#     'user-agent': 'Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36'}
-mainUrl = 'https://www.weibo.com/chinaetfs'
+    'host': 'm.weibo.cn',
+    'refer': 'https://m.weibo.cn/u/5687069307',
+    'user-agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 12_3_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/12.1.1',
+    'X-Requested-With': 'XMLHttpRequest'
+}
+params = {
+    'type': 'uid',
+    'value': '5687069307',
+    'containerid': '1076035687069307',
+    'page': '{page}'
+}
 login_url = 'https://www.weibo.com/login.php'
 
 ARTILE = 'chinaetfs_weibo.txt'
@@ -33,54 +42,86 @@ def writ_to_file(content):
 
 
 def spilder_url():
-    try:
-        print('拉取第1页url')
-        print(mainUrl)
-        r = s.get(login_url, headers=headers)
-        r = s.get(mainUrl, headers=headers)
-    except Exception as e:
-        print(r.raise_for_status())
-    else:
-        soup = BeautifulSoup(r.content, 'lxml')
-        writ_to_file(soup.prettify())
-        return
-        # print(soup.prettify())
-        # 提取本页的所有URL及其他页面的url
-        urlPage = set()
-        urlContent = set()
-        begin = 0
-        end = 0
-        for urls in soup.find_all('a'):
-            # print(urls['href'])
-            if re.match(r'https://www.chinaetfs.net/\?p=\d+', urls['href']):
-                urlContent.add(urls['href'])
-            if re.match(r'https://www.chinaetfs.net/\?paged=\d+', urls['href']):
-                urlPage.add(urls['href'])
-                data = int(re.search(r'\d+', urls['href']).group())
-                if data > begin:
-                    begin = end
-                    end = data
-                    print('begin:%d, end:%d' % (begin, end))
+    page_total = 1
+    page = 1
+    for i in range(page_total):
+        try:
+            print('拉取第%d页url' % page)
+            print(mainUrl)
 
-        for i in range(begin, (end + 1)):
-            print('拉取第%d页url' % i)
-            urlmother = 'https://www.chinaetfs.net/?paged=%d' % i
-            print(urlmother)
-            try:
-                r = s.get(urlmother, headers=headers)
-            except Exception as e:
-                print('拉取第%d页url失败!' % i)
-                print(r.raise_for_status())
-            else:
-                soup = BeautifulSoup(r.content, 'lxml')
-                for urls in soup.find_all('a'):
-                    if re.match(r'https://www.chinaetfs.net/\?p=\d+', urls['href']):
-                        urlContent.add(urls['href'])
-        # print(urlContent)
-        # print(urlPage)
-        urlAll = list(urlContent)
-        return urlAll
-        # print(urlAll)
+            params['page'] = str(page)
+        # r = s.get(login_url, headers=headers)
+            r = s.get(mainUrl, headers=headers, params=params)
+            cards = r.json().get('data').get('cards')
+        except Exception as e:
+            print(r.raise_for_status())
+        else:
+            page += 1
+            for card in cards:
+                # print(card)
+                with open(ARTILE, 'a+', encoding='utf-8') as file:
+                    if card.get('card_type') == 9:
+                        text = card.get('mblog').get('text')
+                        print(text)
+                        urlPart = re.search(r'(?<=\.\.\.<a href=").+(?=">)', text)
+                        if urlPart != None:
+                            ulr = 'https://m.weibo.cn' + urlPart.group()
+                            print(ulr)
+                            r = s.get(ulr, headers=headers)
+                            # print(r.text)
+                            soup = BeautifulSoup(r.content, 'lxml')
+                            for child in soup.find_all('script'):
+                                # print(child.get_text())
+                                content = re.search(
+                                    r'(?<="text": ").+(?=")', child.get_text())
+                                if content != None:
+                                    artile = (re.sub(r'[<br/> ]', '', content.group()))
+                                    # print(text)
+                                    file.write(artile)
+                                    file.write('\n\n')
+                        else:
+                            pattern = re.compile(r'<.*?>|转发微博|查看图片')
+                            artile = re.sub(pattern, '', text)
+                            print(artile)
+                            file.write(artile)
+                            file.write('\n\n')
+    # print(soup.prettify())
+    # 提取本页的所有URL及其他页面的url
+    # urlPage = set()
+    # urlContent = set()
+    # begin = 0
+    # end = 0
+    # for urls in soup.find_all('a'):
+    #     # print(urls['href'])
+    #     if re.match(r'https://www.chinaetfs.net/\?p=\d+', urls['href']):
+    #         urlContent.add(urls['href'])
+    #     if re.match(r'https://www.chinaetfs.net/\?paged=\d+', urls['href']):
+    #         urlPage.add(urls['href'])
+    #         data = int(re.search(r'\d+', urls['href']).group())
+    #         if data > begin:
+    #             begin = end
+    #             end = data
+    #             print('begin:%d, end:%d' % (begin, end))
+
+    # for i in range(begin, (end + 1)):
+    #     print('拉取第%d页url' % i)
+    #     urlmother = 'https://www.chinaetfs.net/?paged=%d' % i
+    #     print(urlmother)
+    #     try:
+    #         r = s.get(urlmother, headers=headers)
+    #     except Exception as e:
+    #         print('拉取第%d页url失败!' % i)
+    #         print(r.raise_for_status())
+    #     else:
+    #         soup = BeautifulSoup(r.content, 'lxml')
+    #         for urls in soup.find_all('a'):
+    #             if re.match(r'https://www.chinaetfs.net/\?p=\d+', urls['href']):
+    #                 urlContent.add(urls['href'])
+    # print(urlContent)
+    # print(urlPage)
+    # urlAll = list(urlContent)
+    # return urlAll
+    # print(urlAll)
 
 
 # 提取数字
