@@ -60,12 +60,21 @@ def spilder_url():
         # print(urlAll)
 
 
+def embeded_number(s):
+    result = int(re.search(r'\d+', s).group())
+    print(result)
+    return result
+
+
 def spilder_content(urlAll):
     # urlAll = ['https://www.chinaetfs.net/?p=1260']
-    print('共%d篇' % len(urlAll))
+
     title, time, artile = '', '', ''
     if urlAll != None:
+        print('共%d篇' % len(urlAll))
         i = 0
+        urlAll.sort(key=embeded_number)
+        print(urlAll)
         for url in urlAll:
             try:
                 i += 1
@@ -79,20 +88,29 @@ def spilder_content(urlAll):
                     soup = BeautifulSoup(r.content, 'lxml')
                     # print(soup.find_all('header', class_='entry-header'))
                     for child in soup.find_all('header', class_='entry-header'):
-                        title = child.h1.string
-                        time = child.time.string
-                    print(title, time)
+                        try:
+                            title = child.h1.string
+                            time = child.time.string
+                        except Exception as e:
+                            print('no title!')
+                            title = 'No title'
+                        else:
+                            print(title, time)
                     for child in soup.find_all('div', class_='entry-content'):
                         artile = child.get_text()
                     print(artile)
                     file.write(title)
-                    file.write('\t\t\t%s' % time)
+                    file.write('\t\t\t%s\n' % time)
+                    file.write('URL: ' + url)
                     file.write('\n\n')
                     file.write(artile)
+                    file.write('\n\n')
         print('拉取所有文章成功！共%d篇' % i)
 
 
 def main():
+    # s = 'https://www.chinaetfs.net/?p=969'
+    # embeded_number(s)
     spilder_content(spilder_url())
 
 
