@@ -140,8 +140,8 @@ def create_wordcloud():
     wc.generate(cut_word())
     plt.imshow(wc, interpolation='bilinear')
     plt.axis('off')
-    plt.show()
-    # wc.to_file('chinaetfs.png')
+    # plt.show()
+    wc.to_file('chinaetfs.png')
 
 
 def main():
