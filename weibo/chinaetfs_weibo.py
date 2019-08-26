@@ -206,14 +206,14 @@ def create_wordcloud():
     stop_words = ['URL', 'https', 'www', 'net', 'com', 'xueqiu'
                   'chinaetfs', '什么', '为什么', '这样', '可以', '他们', '那么', '没有', '如果',
                   '只有', '不是', '没有', '或者', '已经', '自己', '我们', '这个', '还是', '真的', '只是',
-                  '就是']
+                  '就是', '不会', '回复']
     wc = WordCloud(background_color='black', max_words=500, mask=wc_mask, scale=4,
                    max_font_size=70, random_state=42, stopwords=stop_words, font_path=WC_FONT_PATH)
     wc.generate(cut_word())
     plt.imshow(wc, interpolation='bilinear')
     plt.axis('off')
     # plt.show()
-    wc.to_file('chinaetfs.png')
+    wc.to_file('chinaetfs_weibo.png')
 
 
 def main():
