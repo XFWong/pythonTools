@@ -113,6 +113,7 @@ def merge_file(file1=BLOG_FILE, file2=WEIBO_FILE, file3=ALL_FILE):
         weibo_content = weibo.read()
         pattern = re.compile(r'#########')
         progress = 0
+        blog_content_list = re.split(pattern, blog_content)
         # 博客内容已排好序，所以将微博内容插入博客
         for weibo_content_oneday in re.split(pattern, weibo_content):
             # 提取微博时间并查找位置插入博客
@@ -126,13 +127,12 @@ def merge_file(file1=BLOG_FILE, file2=WEIBO_FILE, file3=ALL_FILE):
                     r'(?<=-)0', '', weibo_time_result.group())  # 去掉微博时间里面的0
                 # 遍历博客时间，寻找位置插入微博内容
                 insert = 0
-                blog_content_list = re.split(pattern, blog_content)
                 # print('len:%d' % len(blog_content_list))
                 # print(blog_content_list)
                 i = 0
                 while i < len(blog_content_list):
                     blog_content_oneday = blog_content_list[i]
-                    i += 1
+
                     pattern_time = re.compile(
                         r'\d{4}年\d{1,2}月\d{1,2}|\d{4}-\d{1,2}-\d{1,2}')
                     blog_time_result = re.search(
@@ -146,34 +146,43 @@ def merge_file(file1=BLOG_FILE, file2=WEIBO_FILE, file3=ALL_FILE):
                             r'\D', '-', blog_time_result.group())
                         # print(blog_time)
                         if datetime.datetime.strptime(weibo_time, '%Y-%m-%d') <= datetime.datetime.strptime(blog_time, '%Y-%m-%d') and insert == 0:
-                            merge_content += weibo_content_oneday
-                            merge_content += '\n#########\n'
-                            merge_content += blog_content_oneday
-                            merge_content += '\n#########\n'
+                            # merge_content += weibo_content_oneday
+                            # merge_content += '\n#########\n'
+                            # merge_content += blog_content_oneday
+                            # merge_content += '\n#########\n'
+                            blog_content_list.insert(i, weibo_content_oneday)
                             insert = 1
                             # print('if')
                             # print(merge_content, i)
-                        else:
-                            merge_content += blog_content_oneday
-                            merge_content += '\n#########\n'
+                        # else:
+                        #     blog_content_list.insert(i, weibo_content_oneday)
+                            # merge_content += blog_content_oneday
+                            # merge_content += '\n#########\n'
                             # print('else')
                             # print(merge_content, i)
+                    i += 1
                 # print(weibo_content_oneday)
                 # print('out blog_content_list')
                 # print(merge_content)
                 # print('ddddddddd')
                 if insert == 0:
-                    merge_content += weibo_content_oneday
-                    merge_content += '\n#########\n'
+                    blog_content_list.insert(
+                        len(blog_content_list), weibo_content_oneday)
+                # print(blog_content_list)
+                # merge_content += weibo_content_oneday
+                # merge_content += '\n#########\n'
                 # print(merge_content)
                 # print('out while!!!')
-                blog_content = merge_content
+                # blog_content = merge_content
                 # print(blog_content)
                 # print('insert:%d' % insert)
             # print(total)
             print('进度: {0} %,共 {1}'.format(
                 round(progress * 100 / total), total), end='\r')
-        merge.write(blog_content)
+            # print(blog_content_list)
+        for content_merge in blog_content_list:
+            merge.write(content_merge)
+            merge.write('\n#########\n')
         # print(weibo_time)
         # weibo_content_tmp = re.sub(
         #     patern_time, weibo_time, weibo_content_tmp)
