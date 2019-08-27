@@ -117,7 +117,8 @@ def spilder_content(urlAll):
                     file.write('URL: ' + url)
                     file.write('\n\n')
                     file.write(artile)
-                    file.write('\n\n')
+                    file.write('#########')
+                    file.write('\n')
         print('拉取所有文章成功！共%d篇' % i)
 
 

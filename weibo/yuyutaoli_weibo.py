@@ -9,6 +9,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from wordcloud import WordCloud
 from PIL import Image
+import datetime
 
 
 s = requests.Session()
@@ -16,19 +17,19 @@ s = requests.Session()
 mainUrl = 'https://m.weibo.cn/api/container/getIndex'
 headers = {
     'host': 'm.weibo.cn',
-    'refer': 'https://m.weibo.cn/u/5687069307',
+    'refer': 'https://m.weibo.cn/u/1912579011',
     'user-agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 12_3_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/12.1.1',
     'X-Requested-With': 'XMLHttpRequest'
 }
 params = {
     'type': 'uid',
-    'value': '5687069307',
-    'containerid': '1076035687069307',
+    'value': '1912579011',
+    'containerid': '1076031912579011',
     'page': '{page}'
 }
 login_url = 'https://www.weibo.com/login.php'
 
-ARTILE = 'chinaetfs_weibo.txt'
+ARTILE = 'yeyutaoli_weibo.txt'
 # 词云形状图片
 WC_MASK_IMG = 'shade.jpg'
 # WC_MASK_IMG = 'etfs.jpg'
@@ -163,7 +164,7 @@ def spilder_content(urlAll):
     title, time, artile = '', '', ''
     if urlAll != None:
         print('共%d篇' % len(urlAll))
-        i = 0
+        i = 1
         urlAll.sort(key=embeded_number)
         print(urlAll)
         for url in urlAll:
@@ -219,7 +220,47 @@ def create_wordcloud():
     plt.imshow(wc, interpolation='bilinear')
     plt.axis('off')
     # plt.show()
-    wc.to_file('chinaetfs_weibo.png')
+    wc.to_file('yeyutaoli_weibo.png')
+
+
+def sort_weibo_file():
+    with open(ARTILE, 'r+', encoding='utf-8') as weibo:
+        weibo_content = weibo.read()
+        sort_content = {}
+        pattern = re.compile(r'#########')
+        for weibo_content_oneday in re.split(pattern, weibo_content):
+            pattern_time = re.compile(r'\d{4}-\d{1,2}-\d{1,2}')
+            weibo_time_result = re.search(pattern_time, weibo_content_oneday)
+            if weibo_time_result != None:
+                exist = 0
+                content = []
+                for key in sort_content.keys():
+                    if key == weibo_time_result.group():
+                        if type(sort_content[key]) == list:
+                            sort_content[key].append(weibo_content_oneday)
+                        else:
+                            content.append(sort_content[key])
+                            content.append(weibo_content_oneday)
+                            sort_content[key] = content
+                        exist = 1
+                if exist == 0:
+                    sort_content[
+                        weibo_time_result.group()] = weibo_content_oneday
+                else:
+                    exist = 0
+        content_tmp = sorted(
+            sort_content.keys(), key=lambda x: datetime.datetime.strptime(x, '%Y-%m-%d'))
+        text = ''
+        for con in content_tmp:
+            if type(sort_content[con]) == list:
+                for ele in sort_content[con]:
+                    text += ele
+                    text += '\n#########\n'
+            else:
+                text += sort_content[con]
+                text += '\n#########\n'
+        weibo.seek(0)
+        weibo.write(text)
 
 
 def main():
@@ -228,7 +269,8 @@ def main():
     # 文章存在则提取分词并生成词云
     if os.path.exists(ARTILE):
         # print(cut_word())
-        create_wordcloud()
+        # create_wordcloud()
+        sort_weibo_file()
 
     else:
         spilder_url()
